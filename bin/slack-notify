@@ -1,0 +1,70 @@
+#!/bin/bash
+set -eo pipefail
+
+# Required environment variables:
+#   SLACK_CHANNEL, SLACK_TOKEN,
+# These are from GitLab CI:
+#   CI_PROJECT_NAME, CI_PIPELINE_URL, CI_COMMIT_BRANCH
+
+# defaults and constants
+: "${SLACK_CHANNEL:=www-notify}"
+
+# parse cli args
+while [[ $# -gt 1 ]]; do
+    key="$1"
+    case $key in
+        --stage)
+            STAGE="$2"
+            shift # past argument
+            ;;
+        --status)
+            STATUS="$2"
+            shift # past argument
+            ;;
+        -m|--message)
+            MESSAGE="$2"
+            shift # past argument
+            ;;
+    esac
+    shift # past argument or value
+done
+
+if [[ -n "$STATUS" ]]; then
+    STATUS=$(echo "$STATUS" | tr '[:lower:]' '[:upper:]')
+    case "$STATUS" in
+      'SUCCESS')
+        STATUS_PREFIX=":tada:"
+        ;;
+      'SHIPPED')
+        STATUS_PREFIX=":ship:"
+        ;;
+      'WARNING')
+        STATUS_PREFIX=":warning:"
+        ;;
+      'FAILURE')
+        STATUS_PREFIX=":rotating_light:"
+        ;;
+      *)
+        STATUS_PREFIX=":sparkles:"
+        ;;
+    esac
+    STATUS="${STATUS_PREFIX} *${STATUS}*: "
+fi
+
+# add project name
+STATUS="*${CI_PROJECT_NAME}*: ${STATUS}"
+
+if [[ -n "$STAGE" ]]; then
+    MESSAGE="${STATUS}${STAGE}:"
+    MESSAGE="$MESSAGE Branch *${CI_COMMIT_BRANCH}* <${CI_PIPELINE_URL}|CI Pipeline>"
+elif [[ -n "$MESSAGE" ]]; then
+    MESSAGE="${STATUS}${MESSAGE}"
+else
+    echo "Missing required arguments"
+    echo
+    echo "Usage: slack-notify.sh [--stage STAGE]|[-m MESSAGE]"
+    echo "Optional args: --status"
+    exit 1
+fi
+
+slack-cli -d "${SLACK_CHANNEL}" "${MESSAGE}" || true
