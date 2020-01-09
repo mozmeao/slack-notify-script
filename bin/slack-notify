@@ -56,7 +56,7 @@ STATUS="*${CI_PROJECT_NAME}*: ${STATUS}"
 
 if [[ -n "$STAGE" ]]; then
     MESSAGE="${STATUS}${STAGE}:"
-    MESSAGE="$MESSAGE Branch *${CI_COMMIT_BRANCH}* <${CI_PIPELINE_URL}|CI Pipeline>"
+    MESSAGE="$MESSAGE Branch *${CI_COMMIT_BRANCH}* | <${CI_PIPELINE_URL}|pipeline>"
 elif [[ -n "$MESSAGE" ]]; then
     MESSAGE="${STATUS}${MESSAGE}"
 else
