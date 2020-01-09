@@ -9,4 +9,4 @@ COPY bin/slack-notify .
 
 USER meao
 
-ENTRYPOINT /app/slack-notify
+ENTRYPOINT ["/app/slack-notify"]
